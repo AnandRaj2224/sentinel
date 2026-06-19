@@ -1,0 +1,42 @@
+# Binaries
+/bin/
+/dist/
+/build/
+
+# Test binary
+*.test
+
+# Coverage reports
+*.out
+coverage.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+*.md
