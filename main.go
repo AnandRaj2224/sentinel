@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -23,6 +27,15 @@ func main() {
 	if targetURL == "" {
 		targetURL = "http://localhost:9000"
 	}
+	// parsing the main severs URL.
+	parsedURL, err := url.Parse(targetURL)
+	if err != nil {
+		log.Fatal("failed to parse the url!", err)
+	}
+	// creating a new reverse Proxy with with main servers parsed URL.
+	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
 
-	fmt.Printf("Starting Sentinel on port %v, forwarding to %v",port,targetURL)
+	fmt.Printf("Starting Sentinel on port %v, forwarding to %v\n", port, targetURL)
+	log.Fatal(http.ListenAndServe(":"+port, proxy))
+
 }
