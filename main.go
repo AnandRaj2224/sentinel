@@ -11,6 +11,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		log.Printf("Incoming request: %v\n %v", r.Method, r.URL.Path)
+
+		next.ServeHTTP(w, r)
+
+	})
+}
+
 func main() {
 	// load the env so they are avalible to use.
 	err := godotenv.Load()
@@ -34,8 +44,10 @@ func main() {
 	}
 	// creating a new reverse Proxy with with main servers parsed URL.
 	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
+	// logging contain the function + closure object returned from loggingMiddleware.
+	logging := LoggingMiddleware(proxy)
 
 	fmt.Printf("Starting Sentinel on port %v, forwarding to %v\n", port, targetURL)
-	log.Fatal(http.ListenAndServe(":"+port, proxy))
+	log.Fatal(http.ListenAndServe(":"+port, logging))
 
 }
