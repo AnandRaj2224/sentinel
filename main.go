@@ -30,6 +30,27 @@ func NewRateLimiter() *RateLimiter {
 	}
 }
 
+// Allow implements a sliding window algo for
+// blocking the requests that exceeds the limits.
+func (rl *RateLimiter) Allow(ip string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	var filtered []time.Time
+	threshold := time.Now().Add(-10 * time.Second)
+
+	for _, t := range rl.visitors[ip] {
+		if t.After(threshold) {
+			filtered = append(filtered, t)
+		}
+	}
+	rl.visitors[ip] = filtered
+	if len(rl.visitors[ip]) < 5 {
+		rl.visitors[ip] = append(rl.visitors[ip], time.Now())
+		return true
+	}
+	return false
+}
+
 // logging function that logs HTTP method,path,and duration to complete the request
 // in json format using slog.
 func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
