@@ -14,6 +14,44 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// CachedResponse is a struct that is used
+// to store our own message/response.
+type CachedResponse struct {
+	StatusCode int
+	Headers    http.Header
+	Body       []byte
+}
+
+// IdempotencyEngine is a struct that has our resp
+// that we will forward and a mutex to lock it.
+type IdempotencyEngine struct {
+	resp map[string]CachedResponse
+	mu   sync.RWMutex
+}
+
+// NewIdempotencyEngine returns new
+// NewIdempotencyEngine struct.
+func NewIdempotencyEngine() *IdempotencyEngine {
+	return &IdempotencyEngine{
+		resp: make(map[string]CachedResponse),
+	}
+}
+
+// IdempotencyMiddleware takes in a pointer to IdempotencyEngine and the next Middleware
+// matches the key.
+func IdempotencyMiddleware(IE *IdempotencyEngine, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get("Idempotency-Key")
+		if key == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		log.Println("Idempotency key found:", key)
+		next.ServeHTTP(w, r)
+
+	})
+}
+
 // RateLimiter struct contains visitors
 // that maps ip address to requests and
 // the frequency / no of time in a time period.
