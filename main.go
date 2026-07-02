@@ -13,6 +13,26 @@ import (
 
 	"github.com/joho/godotenv"
 )
+// responseRecorder is a struct that
+// is used to copy the respones 
+// comming from the server.
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+	body       []byte
+}
+// WriteHeader method writes the status code of the response
+// to our ResponseRecorder struct instance.
+func (rr *responseRecorder) WriteHeader(statusCode int) {
+	rr.statusCode = statusCode
+	rr.ResponseWriter.WriteHeader(statusCode)
+}
+// Write method Writes the body of the response to our 
+// ResponseRecorder struct instance.
+func (rr *responseRecorder) Write(b []byte) (int, error) {
+	rr.body = append(rr.body, b...)
+	return rr.ResponseWriter.Write(b)
+}
 
 // CachedResponse is a struct that is used
 // to store our own message/response.
