@@ -14,6 +14,7 @@ import (
 
 	"github.com/joho/godotenv"
 )
+
 // RateLimitMiddleware parses the IP address and checks it against the rate limit,if rate limit exceded
 // return a http.StatusTooManyRequests.
 func RateLimitMiddleware(limiter *RateLimiter, logger *slog.Logger, next http.Handler) http.Handler {
@@ -28,7 +29,6 @@ func RateLimitMiddleware(limiter *RateLimiter, logger *slog.Logger, next http.Ha
 		}
 		logger.Warn("rate limit was exceeded, IP:", ip)
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		return
 	})
 }
 
@@ -193,23 +193,20 @@ func main() {
 		log.Fatal("failed to parse the url!", err)
 	}
 
-	// creating a new slog object
-	// review
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
-
-	// review
 	logger := slog.New(jsonHandler)
 
-	// initialising the Rate Limiter.
 	limiter := NewRateLimiter()
+	engine := NewIdempotencyEngine()
 
 	// creating a new reverse Proxy with with main servers parsed URL.
 	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
 
-	// logging contain the function + closure object returned from loggingMiddleware.
-	logging := LoggingMiddleware(logger, proxy)
+	idempHandler := IdempotencyMiddleware(engine, proxy)
+	rlHandler := RateLimitMiddleware(limiter, logger, idempHandler)
+	finalHandler := LoggingMiddleware(logger, rlHandler)
+
+	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
 
 	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
-	log.Fatal(http.ListenAndServe(":"+port, logging))
-
 }
