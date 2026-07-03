@@ -151,6 +151,21 @@ func (rl *RateLimiter) Allow(ip string) bool {
 	return false
 }
 
+func (rl *RateLimiter) CleanupWorker() {
+	ticker := time.NewTicker(1 * time.Minute)
+
+	for range ticker.C {
+		threshold := time.Now().Add(-10 * time.Second)
+		rl.mu.Lock()
+		for ip, timestamps := range rl.visitors {
+			if len(timestamps) == 0 || timestamps[len(timestamps)-1].Before(threshold) {
+				delete(rl.visitors, ip)
+			}
+		}
+		rl.mu.Unlock()
+	}
+}
+
 // LoggingMiddleware intercepts inbound requests to measure latency and output structured JSON telemetry.
 func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +221,8 @@ func main() {
 	rlHandler := RateLimitMiddleware(limiter, logger, idempHandler)
 	finalHandler := LoggingMiddleware(logger, rlHandler)
 
+	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
+	go limiter.CleanupWorker()
 	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
 
-	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
 }
