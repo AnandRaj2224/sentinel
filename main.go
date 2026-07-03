@@ -59,6 +59,7 @@ type CachedResponse struct {
 	StatusCode int
 	Headers    http.Header
 	Body       []byte
+	CreatedAt  time.Time
 }
 
 // RateLimiter tracks client request timestamps in a thread-safe map to enforce sliding-window rate limits.
@@ -109,9 +110,25 @@ func IdempotencyMiddleware(IE *IdempotencyEngine, next http.Handler) http.Handle
 			StatusCode: rr.statusCode,
 			Body:       rr.body,
 			Headers:    w.Header(),
+			CreatedAt:  time.Now(),
 		}
 		IE.resp[r.Header.Get("Idempotency-Key")] = newResp
 	})
+}
+func (IE *IdempotencyEngine) CleanupWorker() {
+	ticker := time.NewTicker(5 * time.Minute)
+
+	for range ticker.C {
+		threshold := time.Now().Add(-24 * time.Hour)
+		IE.mu.Lock()
+
+		for key, cached := range IE.resp {
+			if cached.CreatedAt.Before(threshold) {
+				delete(IE.resp, key)
+			}
+		}
+		IE.mu.Unlock()
+	}
 }
 
 // RateLimiter struct contains visitors
@@ -223,6 +240,7 @@ func main() {
 
 	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
 	go limiter.CleanupWorker()
+	go engine.CleanupWorker()
 	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
 
 }
