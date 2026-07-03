@@ -13,62 +13,86 @@ import (
 
 	"github.com/joho/godotenv"
 )
-// responseRecorder is a struct that
-// is used to copy the respones 
-// comming from the server.
+
+// responseRecorder wraps htt.responseWriter
+// to capture status code and body of downstream HTTP response.
 type responseRecorder struct {
 	http.ResponseWriter
 	statusCode int
 	body       []byte
 }
-// WriteHeader method writes the status code of the response
-// to our ResponseRecorder struct instance.
+
+// WriteHeader method captures the status Code and passes
+// to the underlying ResponseWriter.
 func (rr *responseRecorder) WriteHeader(statusCode int) {
 	rr.statusCode = statusCode
 	rr.ResponseWriter.WriteHeader(statusCode)
 }
-// Write method Writes the body of the response to our 
-// ResponseRecorder struct instance.
+
+// WriteHeader method captures the body and passes
+// to the underlying ResponseWriter.
 func (rr *responseRecorder) Write(b []byte) (int, error) {
 	rr.body = append(rr.body, b...)
 	return rr.ResponseWriter.Write(b)
 }
 
-// CachedResponse is a struct that is used
-// to store our own message/response.
+// CachedResponse stores the intercepted HTTP response data for future identical requests.
 type CachedResponse struct {
 	StatusCode int
 	Headers    http.Header
 	Body       []byte
 }
 
-// IdempotencyEngine is a struct that has our resp
-// that we will forward and a mutex to lock it.
+// RateLimiter tracks client request timestamps in a thread-safe map to enforce sliding-window rate limits.
 type IdempotencyEngine struct {
 	resp map[string]CachedResponse
 	mu   sync.RWMutex
 }
 
-// NewIdempotencyEngine returns new
-// NewIdempotencyEngine struct.
+// NewIdempotencyEngine initializes and returns
+// a pointer to a new IdempotencyEngine.
 func NewIdempotencyEngine() *IdempotencyEngine {
 	return &IdempotencyEngine{
 		resp: make(map[string]CachedResponse),
 	}
 }
 
-// IdempotencyMiddleware takes in a pointer to IdempotencyEngine and the next Middleware
-// matches the key.
+// IdempotencyMiddleware intercepts requests to serve cached responses if a matching
+// Idempotency-Key is found.
 func IdempotencyMiddleware(IE *IdempotencyEngine, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key := r.Header.Get("Idempotency-Key")
+
 		if key == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
-		log.Println("Idempotency key found:", key)
-		next.ServeHTTP(w, r)
 
+		IE.mu.RLock()
+		cached, exists := IE.resp[key]
+		IE.mu.RUnlock()
+
+		if exists {
+			for key, val := range cached.Headers {
+				for _, v := range val {
+					w.Header().Set(key, v)
+				}
+			}
+			w.WriteHeader(cached.StatusCode)
+			w.Write(cached.Body)
+			return
+		}
+		rr := &responseRecorder{ResponseWriter: w}
+		next.ServeHTTP(rr, r)
+		IE.mu.Lock()
+		defer IE.mu.Unlock()
+
+		newResp := CachedResponse{
+			StatusCode: rr.statusCode,
+			Body:       rr.body,
+			Headers:    w.Header(),
+		}
+		IE.resp[r.Header.Get("Idempotency-Key")] = newResp
 	})
 }
 
@@ -109,8 +133,7 @@ func (rl *RateLimiter) Allow(ip string) bool {
 	return false
 }
 
-// logging function that logs HTTP method,path,and duration to complete the request
-// in json format using slog.
+// LoggingMiddleware intercepts inbound requests to measure latency and output structured JSON telemetry.
 func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
