@@ -14,13 +14,13 @@ func RateLimitMiddleware(limiter *engine.RateLimiter, logger *slog.Logger, next 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			logger.Error("failed while parsing IP", err)
+			logger.Error("failed while parsing IP", "error", err)
 		}
 		if limiter.Allow(ip) {
 			next.ServeHTTP(w, r)
 			return
 		}
-		logger.Warn("rate limit was exceeded, IP:", ip)
+		logger.Warn("rate limit was exceeded", "ip", ip)
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 	})
 }
