@@ -4,200 +4,15 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"sync"
-	"time"
 
+	"github.com/AnandRaj2224/sentinel/internal/engine"
+	"github.com/AnandRaj2224/sentinel/internal/middleware"
 	"github.com/joho/godotenv"
 )
-
-// RateLimitMiddleware parses the IP address and checks it against the rate limit,if rate limit exceded
-// return a http.StatusTooManyRequests.
-func RateLimitMiddleware(limiter *RateLimiter, logger *slog.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			logger.Error("failed while parsing IP", err)
-		}
-		if limiter.Allow(ip) {
-			next.ServeHTTP(w, r)
-			return
-		}
-		logger.Warn("rate limit was exceeded, IP:", ip)
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-	})
-}
-
-// responseRecorder wraps htt.responseWriter
-// to capture status code and body of downstream HTTP response.
-type responseRecorder struct {
-	http.ResponseWriter
-	statusCode int
-	body       []byte
-}
-
-// WriteHeader method captures the status Code and passes
-// to the underlying ResponseWriter.
-func (rr *responseRecorder) WriteHeader(statusCode int) {
-	rr.statusCode = statusCode
-	rr.ResponseWriter.WriteHeader(statusCode)
-}
-
-// WriteHeader method captures the body and passes
-// to the underlying ResponseWriter.
-func (rr *responseRecorder) Write(b []byte) (int, error) {
-	rr.body = append(rr.body, b...)
-	return rr.ResponseWriter.Write(b)
-}
-
-// CachedResponse stores the intercepted HTTP response data for future identical requests.
-type CachedResponse struct {
-	StatusCode int
-	Headers    http.Header
-	Body       []byte
-	CreatedAt  time.Time
-}
-
-// RateLimiter tracks client request timestamps in a thread-safe map to enforce sliding-window rate limits.
-type IdempotencyEngine struct {
-	resp map[string]CachedResponse
-	mu   sync.RWMutex
-}
-
-// NewIdempotencyEngine initializes and returns
-// a pointer to a new IdempotencyEngine.
-func NewIdempotencyEngine() *IdempotencyEngine {
-	return &IdempotencyEngine{
-		resp: make(map[string]CachedResponse),
-	}
-}
-
-// IdempotencyMiddleware intercepts requests to serve cached responses if a matching
-// Idempotency-Key is found.
-func IdempotencyMiddleware(IE *IdempotencyEngine, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := r.Header.Get("Idempotency-Key")
-
-		if key == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		IE.mu.RLock()
-		cached, exists := IE.resp[key]
-		IE.mu.RUnlock()
-
-		if exists {
-			for key, val := range cached.Headers {
-				for _, v := range val {
-					w.Header().Set(key, v)
-				}
-			}
-			w.WriteHeader(cached.StatusCode)
-			w.Write(cached.Body)
-			return
-		}
-		rr := &responseRecorder{ResponseWriter: w}
-		next.ServeHTTP(rr, r)
-		IE.mu.Lock()
-		defer IE.mu.Unlock()
-
-		newResp := CachedResponse{
-			StatusCode: rr.statusCode,
-			Body:       rr.body,
-			Headers:    w.Header(),
-			CreatedAt:  time.Now(),
-		}
-		IE.resp[r.Header.Get("Idempotency-Key")] = newResp
-	})
-}
-func (IE *IdempotencyEngine) CleanupWorker() {
-	ticker := time.NewTicker(5 * time.Minute)
-
-	for range ticker.C {
-		threshold := time.Now().Add(-24 * time.Hour)
-		IE.mu.Lock()
-
-		for key, cached := range IE.resp {
-			if cached.CreatedAt.Before(threshold) {
-				delete(IE.resp, key)
-			}
-		}
-		IE.mu.Unlock()
-	}
-}
-
-// RateLimiter struct contains visitors
-// that maps ip address to requests and
-// the frequency / no of time in a time period.
-type RateLimiter struct {
-	visitors map[string][]time.Time
-	mu       sync.RWMutex
-}
-
-// NewRateLimiter initalises a new RateLimiter struct
-// and return it address.
-func NewRateLimiter() *RateLimiter {
-	return &RateLimiter{
-		visitors: make(map[string][]time.Time),
-	}
-}
-
-// Allow implements a sliding window algo for
-// blocking the requests that exceeds the limits.
-func (rl *RateLimiter) Allow(ip string) bool {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	var filtered []time.Time
-	threshold := time.Now().Add(-10 * time.Second)
-
-	for _, t := range rl.visitors[ip] {
-		if t.After(threshold) {
-			filtered = append(filtered, t)
-		}
-	}
-	rl.visitors[ip] = filtered
-	if len(rl.visitors[ip]) < 5 {
-		rl.visitors[ip] = append(rl.visitors[ip], time.Now())
-		return true
-	}
-	return false
-}
-
-func (rl *RateLimiter) CleanupWorker() {
-	ticker := time.NewTicker(1 * time.Minute)
-
-	for range ticker.C {
-		threshold := time.Now().Add(-10 * time.Second)
-		rl.mu.Lock()
-		for ip, timestamps := range rl.visitors {
-			if len(timestamps) == 0 || timestamps[len(timestamps)-1].Before(threshold) {
-				delete(rl.visitors, ip)
-			}
-		}
-		rl.mu.Unlock()
-	}
-}
-
-// LoggingMiddleware intercepts inbound requests to measure latency and output structured JSON telemetry.
-func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		duration := time.Since(start).String()
-
-		logger.Info("request completed",
-			slog.String("HTTP method", r.Method),
-			slog.String("path", r.URL.Path),
-			slog.String("duration", duration),
-		)
-	})
-}
 
 func main() {
 
@@ -228,19 +43,19 @@ func main() {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
 	logger := slog.New(jsonHandler)
 
-	limiter := NewRateLimiter()
-	engine := NewIdempotencyEngine()
+	limiter := engine.NewRateLimiter()
+	idempEngine := engine.NewIdempotencyEngine()
 
 	// creating a new reverse Proxy with with main servers parsed URL.
 	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
 
-	idempHandler := IdempotencyMiddleware(engine, proxy)
-	rlHandler := RateLimitMiddleware(limiter, logger, idempHandler)
-	finalHandler := LoggingMiddleware(logger, rlHandler)
+	idempHandler := middleware.IdempotencyMiddleware(idempEngine, proxy)
+	rlHandler := middleware.RateLimitMiddleware(limiter, logger, idempHandler)
+	finalHandler := middleware.LoggingMiddleware(logger, rlHandler)
 
 	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
 	go limiter.CleanupWorker()
-	go engine.CleanupWorker()
+	go idempEngine.CleanupWorker()
 	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
 
 }
