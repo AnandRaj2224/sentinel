@@ -1,0 +1,4 @@
+{
+  "/api/users": "http://localhost:9000",
+  "/api/payments": "http://localhost:9001"
+}

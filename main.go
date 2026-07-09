@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -34,13 +35,26 @@ func DynamicRouter(routes map[string]string) http.Handler {
 	})
 }
 
+// loadRoutes function takes the routes file
+// reads it and create a custom routes map.
+func loadRoutes(filename string) map[string]string {
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatal("Failed to Read File:", err)
+	}
+	routes := make(map[string]string)
+	err = json.Unmarshal(file, &routes)
+	if err != nil {
+		log.Fatal("Failed to Read File Content:", file, err)
+	}
+	return routes
+}
+
 func main() {
 
 	port := "8000"
-	routes := map[string]string{
-		"/api/users":    "http://localhost:9000",
-		"/api/payments": "http://localhost:9001",
-	}
+
+	routes := loadRoutes("routes.json")
 	router := DynamicRouter(routes)
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
@@ -53,9 +67,10 @@ func main() {
 	rlHandler := middleware.RateLimitMiddleware(limiter, logger, idempHandler)
 	finalHandler := middleware.LoggingMiddleware(logger, rlHandler)
 
-	logger.Info("Starting Sentinel", "port", port)
 	go limiter.CleanupWorker()
 	go idempEngine.CleanupWorker()
+
+	logger.Info("Starting Sentinel", "port", port)
 	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
 
 }
