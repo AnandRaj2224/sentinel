@@ -16,7 +16,7 @@ import (
 // DynamicRouter is a function that takes the route of an incomming
 // request matches against predefined map of routes if passes creates a
 // new proxy server for that route.
-func DynamicRouter(routes map[string]string) http.Handler {
+func DynamicRouter(routes map[string]RouteConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
@@ -25,7 +25,7 @@ func DynamicRouter(routes map[string]string) http.Handler {
 			http.Error(w, "Route not found", http.StatusNotFound)
 			return
 		}
-		parsedURL, err := url.Parse(target)
+		parsedURL, err := url.Parse(target.TargetURL)
 		if err != nil {
 			http.Error(w, "failed Parsing the route", http.StatusInternalServerError)
 			return
@@ -37,17 +37,23 @@ func DynamicRouter(routes map[string]string) http.Handler {
 
 // loadRoutes function takes the routes file
 // reads it and create a custom routes map.
-func loadRoutes(filename string) map[string]string {
+func loadRoutes(filename string) map[string]RouteConfig {
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal("Failed to Read File:", err)
 	}
-	routes := make(map[string]string)
+	routes := make(map[string]RouteConfig)
 	err = json.Unmarshal(file, &routes)
 	if err != nil {
 		log.Fatal("Failed to Read File Content:", file, err)
 	}
 	return routes
+}
+
+type RouteConfig struct {
+	TargetURL     string
+	WindowSeconds int
+	MaxRequests   int
 }
 
 func main() {
