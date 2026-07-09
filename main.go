@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -11,9 +10,11 @@ import (
 
 	"github.com/AnandRaj2224/sentinel/internal/engine"
 	"github.com/AnandRaj2224/sentinel/internal/middleware"
-	"github.com/joho/godotenv"
 )
 
+// DynamicRouter is a function that takes the route of an incomming
+// request matches against predefined map of routes if passes creates a
+// new proxy server for that route.
 func DynamicRouter(routes map[string]string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -35,29 +36,12 @@ func DynamicRouter(routes map[string]string) http.Handler {
 
 func main() {
 
-	// load the env so they are avalible to use.
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("error loading env!")
+	port := "8000"
+	routes := map[string]string{
+		"/api/users":    "http://localhost:9000",
+		"/api/payments": "http://localhost:9001",
 	}
-
-	// port for the running server -> current proxy.
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	// target URL for the protected server.
-	targetURL := os.Getenv("TARGET_URL")
-	if targetURL == "" {
-		targetURL = "http://localhost:9000"
-	}
-
-	// parsing the main severs URL.
-	parsedURL, err := url.Parse(targetURL)
-	if err != nil {
-		log.Fatal("failed to parse the url!", err)
-	}
+	router := DynamicRouter(routes)
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
 	logger := slog.New(jsonHandler)
@@ -65,14 +49,11 @@ func main() {
 	limiter := engine.NewRateLimiter()
 	idempEngine := engine.NewIdempotencyEngine()
 
-	// creating a new reverse Proxy with with main servers parsed URL.
-	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
-
-	idempHandler := middleware.IdempotencyMiddleware(idempEngine, proxy)
+	idempHandler := middleware.IdempotencyMiddleware(idempEngine, router)
 	rlHandler := middleware.RateLimitMiddleware(limiter, logger, idempHandler)
 	finalHandler := middleware.LoggingMiddleware(logger, rlHandler)
 
-	logger.Info("Starting Sentinel", "port", port, "target_url", targetURL)
+	logger.Info("Starting Sentinel", "port", port)
 	go limiter.CleanupWorker()
 	go idempEngine.CleanupWorker()
 	log.Fatal(http.ListenAndServe(":"+port, finalHandler))
