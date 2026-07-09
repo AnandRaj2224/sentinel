@@ -14,6 +14,25 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func DynamicRouter(routes map[string]string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+
+		target, exists := routes[path]
+		if exists == false {
+			http.Error(w, "Route not found", http.StatusNotFound)
+			return
+		}
+		parsedURL, err := url.Parse(target)
+		if err != nil {
+			http.Error(w, "failed Parsing the route", http.StatusInternalServerError)
+			return
+		}
+		proxy := httputil.NewSingleHostReverseProxy(parsedURL)
+		proxy.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 
 	// load the env so they are avalible to use.
