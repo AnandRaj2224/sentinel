@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+type RouteConfig struct {
+	TargetURL     string
+	WindowSeconds int
+	MaxRequests   int
+}
+
 // RateLimiter struct contains visitors
 // that maps ip address to requests and
 // the frequency / no of time in a time period.
@@ -23,11 +29,11 @@ func NewRateLimiter() *RateLimiter {
 
 // Allow implements a sliding window algo for
 // blocking the requests that exceeds the limits.
-func (rl *RateLimiter) Allow(ip string) bool {
+func (rl *RateLimiter) Allow(ip string, windowSeconds int, maxRequests int) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	var filtered []time.Time
-	threshold := time.Now().Add(-10 * time.Second)
+	threshold := time.Now().Add(-time.Duration(windowSeconds) * time.Second)
 
 	for _, t := range rl.visitors[ip] {
 		if t.After(threshold) {
@@ -35,7 +41,7 @@ func (rl *RateLimiter) Allow(ip string) bool {
 		}
 	}
 	rl.visitors[ip] = filtered
-	if len(rl.visitors[ip]) < 5 {
+	if len(rl.visitors[ip]) < maxRequests {
 		rl.visitors[ip] = append(rl.visitors[ip], time.Now())
 		return true
 	}

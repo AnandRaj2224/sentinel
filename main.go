@@ -16,12 +16,12 @@ import (
 // DynamicRouter is a function that takes the route of an incomming
 // request matches against predefined map of routes if passes creates a
 // new proxy server for that route.
-func DynamicRouter(routes map[string]RouteConfig) http.Handler {
+func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
 		target, exists := routes[path]
-		if exists == false {
+		if !exists {
 			http.Error(w, "Route not found", http.StatusNotFound)
 			return
 		}
@@ -37,23 +37,17 @@ func DynamicRouter(routes map[string]RouteConfig) http.Handler {
 
 // loadRoutes function takes the routes file
 // reads it and create a custom routes map.
-func loadRoutes(filename string) map[string]RouteConfig {
+func loadRoutes(filename string) map[string]engine.RouteConfig {
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal("Failed to Read File:", err)
 	}
-	routes := make(map[string]RouteConfig)
+	routes := make(map[string]engine.RouteConfig)
 	err = json.Unmarshal(file, &routes)
 	if err != nil {
 		log.Fatal("Failed to Read File Content:", file, err)
 	}
 	return routes
-}
-
-type RouteConfig struct {
-	TargetURL     string
-	WindowSeconds int
-	MaxRequests   int
 }
 
 func main() {
@@ -70,7 +64,7 @@ func main() {
 	idempEngine := engine.NewIdempotencyEngine()
 
 	idempHandler := middleware.IdempotencyMiddleware(idempEngine, router)
-	rlHandler := middleware.RateLimitMiddleware(limiter, logger, idempHandler)
+	rlHandler := middleware.RateLimitMiddleware(limiter, routes, logger, idempHandler)
 	finalHandler := middleware.LoggingMiddleware(logger, rlHandler)
 
 	go limiter.CleanupWorker()
