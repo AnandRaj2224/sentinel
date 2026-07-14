@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"sync"
 
 	"github.com/AnandRaj2224/sentinel/internal/engine"
 	"github.com/AnandRaj2224/sentinel/internal/middleware"
@@ -17,19 +18,30 @@ import (
 // request matches against predefined map of routes if passes creates a
 // new proxy server for that route.
 func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
+
+	counters := make(map[string]int)
+	var mu sync.Mutex
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-
 		target, exists := routes[path]
 		if !exists {
 			http.Error(w, "Route not found", http.StatusNotFound)
 			return
 		}
-		parsedURL, err := url.Parse(target.TargetURL)
+
+		mu.Lock()
+		currCount := counters[path]
+		counters[path] = (currCount + 1) % len(target.TargetURLs)
+		mu.Unlock()
+
+		finalURL := target.TargetURLs[currCount]
+		parsedURL, err := url.Parse(finalURL)
 		if err != nil {
 			http.Error(w, "failed Parsing the route", http.StatusInternalServerError)
 			return
 		}
+
 		proxy := httputil.NewSingleHostReverseProxy(parsedURL)
 		proxy.ServeHTTP(w, r)
 	})
@@ -53,7 +65,6 @@ func loadRoutes(filename string) map[string]engine.RouteConfig {
 func main() {
 
 	port := "8000"
-
 	routes := loadRoutes("routes.json")
 	router := DynamicRouter(routes)
 

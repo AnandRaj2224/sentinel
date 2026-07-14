@@ -6,7 +6,7 @@ import (
 )
 
 type RouteConfig struct {
-	TargetURL     string
+	TargetURLs     []string
 	WindowSeconds int
 	MaxRequests   int
 }

@@ -1,11 +1,21 @@
 {
   "/api/users": {
-    "TargetURL": "http://localhost:9000",
+    "TargetURLs": [
+      "http://localhost:9000",
+      "http://localhost:9001",
+      "http://localhost:9002",
+      "http://localhost:9003"
+    ],
     "WindowSeconds": 10,
     "MaxRequests": 20
   },
   "/api/payments": {
-    "TargetURL": "http://localhost:9001",
+    "TargetURLs": [
+      "http://localhost:9004",
+      "http://localhost:9005",
+      "http://localhost:9006",
+      "http://localhost:9007"
+    ],
     "WindowSeconds": 60,
     "MaxRequests": 2
   }
