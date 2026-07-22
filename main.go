@@ -68,7 +68,10 @@ func loadRoutes(filename string) map[string]engine.RouteConfig {
 
 func main() {
 
-	port := "8000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
 	routes := loadRoutes("routes.json")
 	router := DynamicRouter(routes)
 
