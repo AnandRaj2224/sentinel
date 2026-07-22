@@ -29,6 +29,10 @@ func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 			http.Error(w, "Route not found", http.StatusNotFound)
 			return
 		}
+		if len(target.TargetURLs) == 0 {
+			http.Error(w, "No backend servers available for this route", http.StatusBadGateway)
+			return
+		}
 
 		mu.Lock()
 		currCount := counters[path]
