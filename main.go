@@ -14,7 +14,7 @@ import (
 	"github.com/AnandRaj2224/sentinel/internal/middleware"
 )
 
-// DynamicRouter is a function that takes the route of an incomming
+// DynamicRouter is a function that takes the route of an incoming
 // request matches against predefined map of routes if passes creates a
 // new proxy server for that route.
 func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {

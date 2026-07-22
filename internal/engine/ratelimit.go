@@ -19,7 +19,7 @@ type RateLimiter struct {
 	mu       sync.RWMutex
 }
 
-// NewRateLimiter initalises a new RateLimiter struct
+// NewRateLimiter initializes a new RateLimiter struct
 // and return it address.
 func NewRateLimiter() *RateLimiter {
 	return &RateLimiter{
