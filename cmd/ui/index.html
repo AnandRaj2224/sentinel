@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script
+            src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+            integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+            crossorigin="anonymous"
+        ></script>
+        <title>Sentinel | Gateway</title>
+        <style>
+            :root {
+                --bg-color: #0f1115;
+                --panel-bg: #161920;
+                --text-main: #e2e8f0;
+                --text-muted: #94a3b8;
+                --accent: #00add8;
+                --border: #334155;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                background-color: var(--bg-color);
+                color: var(--text-main);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    monospace;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+
+            .container {
+                background: var(--panel-bg);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 2rem;
+                width: 100%;
+                max-width: 500px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.25rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            h1::before {
+                content: "";
+                display: block;
+                width: 10px;
+                height: 10px;
+                background-color: var(--accent);
+                border-radius: 50%;
+                box-shadow: 0 0 8px var(--accent);
+            }
+
+            p.subtitle {
+                color: var(--text-muted);
+                margin-bottom: 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            .description {
+                background-color: rgba(0, 173, 216, 0.05);
+                border-left: 3px solid var(--accent);
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                line-height: 1.5;
+            }
+
+            #dashboard {
+                background: var(--bg-color);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 1rem;
+                height: 200px;
+                overflow-y: auto;
+                margin-bottom: 1.5rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .log-entry {
+                padding: 0.5rem;
+                background: var(--panel-bg);
+                border-radius: 3px;
+                border: 1px solid #222;
+                color: var(--accent);
+                animation: fadeIn 0.3s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-5px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            button {
+                background-color: transparent;
+                color: var(--text-main);
+                border: 1px solid var(--border);
+                padding: 0.75rem 1.5rem;
+                border-radius: 4px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                cursor: pointer;
+                width: 100%;
+                transition: all 0.15s ease;
+            }
+
+            button:hover {
+                background-color: var(--accent);
+                border-color: var(--accent);
+                color: var(--bg-color);
+                font-weight: bold;
+            }
+
+            button:active {
+                transform: translateY(2px);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Sentinel</h1>
+            <p class="subtitle">Distributed Edge Gateway</p>
+
+            <div class="description">
+                <strong>Architecture Demo:</strong> Transmitting a request
+                routes traffic through the Sentinel API Gateway. The gateway
+                evaluates algorithmic rate limits (max 20 req / 10s) before
+                load-balancing authorized traffic across protected backend
+                microservices.
+            </div>
+
+            <div id="dashboard">
+                <!-- HTMX responses will stack here -->
+            </div>
+
+            <button
+                hx-post="/api/test"
+                hx-target="#dashboard"
+                hx-swap="afterbegin"
+            >
+                Transmit Request
+            </button>
+        </div>
+    </body>
+</html>
