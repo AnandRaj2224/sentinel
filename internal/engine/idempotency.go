@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// CachedResponse stores the intercepted HTTP response data for future identical requests.
 type CachedResponse struct {
 	StatusCode int
 	Headers    http.Header
@@ -14,33 +13,60 @@ type CachedResponse struct {
 	CreatedAt  time.Time
 }
 
-// RateLimiter tracks client request timestamps in a thread-safe map to enforce sliding-window rate limits.
-type IdempotencyEngine struct {
-	Resp map[string]CachedResponse
+// Create a dedicated state struct for each idempotency key
+type IdempotencyState struct {
+	Resp *CachedResponse // Use a pointer so we can check if it is nil
 	Mu   sync.RWMutex
 }
 
-// NewIdempotencyEngine initializes and returns
-// a pointer to a new IdempotencyEngine.
+// The Engine now holds pointers to the state, protected by a global map lock
+type IdempotencyEngine struct {
+	states   map[string]*IdempotencyState
+	globalMu sync.RWMutex
+}
+
 func NewIdempotencyEngine() *IdempotencyEngine {
 	return &IdempotencyEngine{
-		Resp: make(map[string]CachedResponse),
+		states: make(map[string]*IdempotencyState),
 	}
 }
 
-// CleanupWorker
+// Encapsulate the Double-Check Locking logic inside the engine
+func (IE *IdempotencyEngine) GetState(key string) *IdempotencyState {
+	// Fast path read
+	IE.globalMu.RLock()
+	state, exists := IE.states[key]
+	IE.globalMu.RUnlock()
+
+	if !exists {
+		IE.globalMu.Lock()
+		state, exists = IE.states[key]
+		if !exists {
+			state = &IdempotencyState{}
+			IE.states[key] = state
+		}
+		IE.globalMu.Unlock()
+	}
+
+	return state
+}
+
 func (IE *IdempotencyEngine) CleanupWorker() {
 	ticker := time.NewTicker(5 * time.Minute)
-
 	for range ticker.C {
 		threshold := time.Now().Add(-24 * time.Hour)
-		IE.Mu.Lock()
 
-		for key, cached := range IE.Resp {
-			if cached.CreatedAt.Before(threshold) {
-				delete(IE.Resp, key)
+		IE.globalMu.Lock()
+		for key, state := range IE.states {
+			state.Mu.RLock()
+
+			if state.Resp != nil && state.Resp.CreatedAt.Before(threshold) {
+				state.Mu.RUnlock()
+				delete(IE.states, key)
+				continue
 			}
+			state.Mu.RUnlock()
 		}
-		IE.Mu.Unlock()
+		IE.globalMu.Unlock()
 	}
 }

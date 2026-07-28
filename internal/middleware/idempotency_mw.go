@@ -34,37 +34,38 @@ func (rr *responseRecorder) Write(b []byte) (int, error) {
 func IdempotencyMiddleware(IE *engine.IdempotencyEngine, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key := r.Header.Get("Idempotency-Key")
-
 		if key == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		IE.Mu.RLock()
-		cached, exists := IE.Resp[key]
-		IE.Mu.RUnlock()
+		state := IE.GetState(key)
 
-		if exists {
-			for key, val := range cached.Headers {
+		state.Mu.RLock()
+		if state.Resp != nil {
+			for k, val := range state.Resp.Headers {
 				for _, v := range val {
-					w.Header().Set(key, v)
+					w.Header().Set(k, v)
 				}
 			}
-			w.WriteHeader(cached.StatusCode)
-			w.Write(cached.Body)
+			w.WriteHeader(state.Resp.StatusCode)
+			w.Write(state.Resp.Body)
+			state.Mu.RUnlock() // Unlock before returning
 			return
 		}
+		state.Mu.RUnlock()
+
 		rr := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(rr, r)
-		IE.Mu.Lock()
-		defer IE.Mu.Unlock()
 
-		newResp := engine.CachedResponse{
+		state.Mu.Lock()
+		defer state.Mu.Unlock()
+
+		state.Resp = &engine.CachedResponse{
 			StatusCode: rr.statusCode,
 			Body:       rr.body,
 			Headers:    w.Header(),
 			CreatedAt:  time.Now(),
 		}
-		IE.Resp[r.Header.Get("Idempotency-Key")] = newResp
 	})
 }
