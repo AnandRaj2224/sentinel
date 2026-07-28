@@ -72,7 +72,7 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
-	routes := loadRoutes("./../../routes.json")
+	routes := loadRoutes("routes.json")
 	router := DynamicRouter(routes)
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
