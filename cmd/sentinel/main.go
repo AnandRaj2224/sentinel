@@ -14,17 +14,28 @@ import (
 	"github.com/AnandRaj2224/sentinel/internal/middleware"
 )
 
+// RouteState a struct to hold the state and lock for a single route.
+type RouteState struct {
+	Count int
+	Mu    sync.Mutex
+}
+
 // DynamicRouter is a function that takes the route of an incoming
 // request matches against predefined map of routes if passes creates a
 // new proxy server for that route.
 func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
+	routeStates := make(map[string]*RouteState)
 
-	counters := make(map[string]int)
-	var mu sync.Mutex
+	for path := range routes {
+		routeStates[path] = &RouteState{
+			Count: 0,
+		}
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		target, exists := routes[path]
+
 		if !exists {
 			http.Error(w, "Route not found", http.StatusNotFound)
 			return
@@ -34,10 +45,12 @@ func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 			return
 		}
 
-		mu.Lock()
-		currCount := counters[path]
-		counters[path] = (currCount + 1) % len(target.TargetURLs)
-		mu.Unlock()
+		state := routeStates[path]
+
+		state.Mu.Lock()
+		currCount := state.Count
+		state.Count = (currCount + 1) % len(target.TargetURLs)
+		state.Mu.Unlock()
 
 		finalURL := target.TargetURLs[currCount]
 		parsedURL, err := url.Parse(finalURL)
