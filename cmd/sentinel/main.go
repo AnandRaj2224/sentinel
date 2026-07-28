@@ -72,7 +72,20 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
-	routes := loadRoutes("routes.json")
+
+	var routes map[string]engine.RouteConfig
+
+	routesEnv := os.Getenv("ROUTES_JSON")
+
+	if routesEnv != "" {
+		err := json.Unmarshal([]byte(routesEnv), &routes)
+		if err != nil {
+			log.Fatal("Failed to parse ROUTES_JSON from environment: ", err)
+		}
+	} else {
+		routes = loadRoutes("routes.json")
+	}
+
 	router := DynamicRouter(routes)
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, nil)
