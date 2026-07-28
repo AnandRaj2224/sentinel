@@ -16,7 +16,7 @@ func main() {
 		wg.Add(1)
 		go func(port string) {
 			defer wg.Done()
-			err := http.ListenAndServe("localhost:"+port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			err := http.ListenAndServe(":"+port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				msg := fmt.Sprintf(`{"message": "Hello from Target Server %s"}`, port)
