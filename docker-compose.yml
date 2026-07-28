@@ -1,0 +1,23 @@
+services:
+  sentinel-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.sentinel
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ROUTES_JSON={"/":{"TargetURLs":["http://ui-server:8081"],"WindowSeconds":60,"MaxRequests":1000},"/api/test":{"TargetURLs":["http://target-backend:9001"],"WindowSeconds":10,"MaxRequests":20}}
+  target-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      - PORT=9001
+
+  ui-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8081:8081"

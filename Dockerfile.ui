@@ -1,0 +1,21 @@
+# build stage
+FROM golang:1.27rc2-alpine3.24 AS BUILDER
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+ENV CGO_ENABLED=0
+
+RUN go build -o /app/ui ./cmd/ui
+
+# production stage
+FROM scratch
+
+COPY --from=BUILDER /app/ui .
+
+CMD [ "./ui" ]
