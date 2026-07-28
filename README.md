@@ -8,6 +8,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=for-the-badge&logo=htmx&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
 
 </div>
