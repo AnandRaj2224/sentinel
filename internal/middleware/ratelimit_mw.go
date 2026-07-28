@@ -15,6 +15,8 @@ func RateLimitMiddleware(limiter *engine.RateLimiter, routes map[string]engine.R
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			logger.Error("failed while parsing IP", "error", err)
+			http.Error(w, "Invalid IP address format", http.StatusBadRequest)
+			return
 		}
 
 		path := r.URL.Path
