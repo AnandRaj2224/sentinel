@@ -231,7 +231,7 @@ Deployment characteristics:
 ├── Dockerfile.sentinel
 ├── Dockerfile.ui
 ├── README.md
-├── LICENSE          # Optional (MIT recommended)
+├── LICENSE         
 └── go.mod
 ```
 
