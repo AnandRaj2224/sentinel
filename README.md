@@ -9,7 +9,7 @@
 ![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=for-the-badge&logo=htmx&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge)
+![Build](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)
 
 </div>
 
@@ -158,13 +158,13 @@ Stress-tested using **hey**.
 
 ![Benchmark](docs/benchmark.png)
 
-| Metric | Result |
-|---------|-------:|
-| Throughput | 9,889 req/sec |
-| Average Latency | 9.6 ms |
-| p50 | 6.7 ms |
-| p95 | 28.9 ms |
-| p99 | 45.8 ms |
+| Metric          |        Result |
+| --------------- | ------------: |
+| Throughput      | 9,889 req/sec |
+| Average Latency |        9.6 ms |
+| p50             |        6.7 ms |
+| p95             |       28.9 ms |
+| p99             |       45.8 ms |
 
 ### Correctness
 
@@ -193,62 +193,20 @@ An in-memory cache minimizes latency by eliminating additional network hops. A R
 
 ---
 
-# ☁️ Deployment
-
-Sentinel is containerized using multi-stage Docker builds and deployed on **Microsoft Azure**.
-
-Deployment characteristics:
-
-- Azure-hosted
-- Docker containers
-- Multi-stage `scratch` runtime images
-- Private backend network
-- Public gateway endpoint
-- HTMX dashboard
-- Stateless backend services
-
----
-
-# 📂 Repository Layout
-
-```text
-.
-├── cmd/
-│   ├── protectedServer/
-│   ├── sentinel/
-│   └── ui/
-│
-├── internal/
-│   ├── engine/
-│   └── middleware/
-│
-├── docs/
-│   ├── dashboard.png
-│   └── benchmark.png
-│
-├── docker-compose.yml
-├── Dockerfile.backend
-├── Dockerfile.sentinel
-├── Dockerfile.ui
-├── README.md
-├── LICENSE         
-└── go.mod
-```
-
 ---
 
 # ⚙️ Technology Stack
 
-| Layer | Technology |
-|---------|------------|
-| Language | Go |
-| Networking | `net/http` |
-| Reverse Proxy | `net/http/httputil` |
-| Frontend | HTMX + HTML + CSS |
-| Concurrency | Goroutines, `sync.Mutex`, `sync.RWMutex` |
-| Logging | `log/slog` |
-| Containers | Docker, Docker Compose |
-| Cloud | Microsoft Azure |
+| Layer         | Technology                               |
+| ------------- | ---------------------------------------- |
+| Language      | Go                                       |
+| Networking    | `net/http`                               |
+| Reverse Proxy | `net/http/httputil`                      |
+| Frontend      | HTMX + HTML + CSS                        |
+| Concurrency   | Goroutines, `sync.Mutex`, `sync.RWMutex` |
+| Logging       | `log/slog`                               |
+| Containers    | Docker, Docker Compose                   |
+| Cloud         | Microsoft Azure                          |
 
 ---
 
@@ -263,7 +221,7 @@ Deployment characteristics:
 ## Clone
 
 ```bash
-git clone https://github.com/<your-username>/sentinel.git
+git clone https://github.com/AnandRaj2224/sentinel
 
 cd sentinel
 ```
@@ -284,9 +242,9 @@ This launches:
 
 # 🔮 Roadmap
 
+- [ ] CI/CD pipeline
 - [ ] Redis-backed distributed rate limiting
 - [ ] Redis-backed idempotency storage
-- [ ] JWT authentication middleware
 - [ ] Prometheus metrics
 - [ ] OpenTelemetry tracing
 - [ ] Dynamic configuration reload
