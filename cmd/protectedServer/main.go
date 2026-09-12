@@ -10,7 +10,7 @@ import (
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "9001" // Fallback 
+		port = "9001" // Fallback
 	}
 
 	log.Printf("Starting Protected Backend Instance on port %s", port)
