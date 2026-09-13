@@ -1,34 +1,37 @@
 name: CI
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.26.5"
+          go-version-file: go.mod
 
-      - name: Check formatting
+      - name: Check Formatting
         run: test -z "$(gofmt -l .)"
 
-      - name: Run go vet
+      - name: Run Go Vet
         run: go vet ./...
 
-      - name: Run tests
-        run: go test -v ./...
+      - name: Run Go Test
+        run: go test ./...
 
-      - name: Build server
+      - name: Build Sentinel
         run: go build ./cmd/sentinel
 
-      - name: Build protected server
+      - name: Build Protected Servers
         run: go build ./cmd/protectedServer
 
-      - name: build UI server
+      - name: Build UI Server
         run: go build ./cmd/ui
