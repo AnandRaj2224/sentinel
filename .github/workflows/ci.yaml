@@ -35,3 +35,9 @@ jobs:
 
       - name: Build UI Server
         run: go build ./cmd/ui
+
+      - name: Validate Compose
+        run: docker compose config
+
+      - name: Build Docker Compose Services
+        run: docker compose build
