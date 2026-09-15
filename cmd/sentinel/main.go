@@ -34,6 +34,13 @@ func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
+
+		if path == "/" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			http.ServeFile(w, r, "index.html")
+			return
+		}
+		
 		target, exists := routes[path]
 
 		if !exists {
