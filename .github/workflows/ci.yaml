@@ -53,4 +53,4 @@ jobs:
           context: .
           file: ./Dockerfile.sentinel
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/sentinel:${{ github.sha }}
+          tags: ghcr.io/anandraj2224/sentinel:${{ github.sha }}
