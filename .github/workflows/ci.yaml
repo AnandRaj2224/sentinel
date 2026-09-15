@@ -33,9 +33,6 @@ jobs:
       - name: Build Protected Servers
         run: go build ./cmd/protectedServer
 
-      - name: Build UI Server
-        run: go build ./cmd/ui
-
       - name: Validate Compose
         run: docker compose config
 
