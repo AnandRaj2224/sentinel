@@ -1,9 +1,4 @@
 {
-  "/": {
-    "TargetURLs": ["http://localhost:8081"],
-    "WindowSeconds": 60,
-    "MaxRequests": 1000
-  },
   "/api/test": {
     "TargetURLs": ["http://localhost:9001", "http://localhost:9002"],
     "WindowSeconds": 10,
