@@ -14,10 +14,14 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/sentinel_vm_key
+          printf '%s\n' "${{ secrets.VM_SSH_KEY }}" | tr -d '\r' > ~/.ssh/sentinel_vm_key
           chmod 600 ~/.ssh/sentinel_vm_key
-          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
 
+          ssh-keygen -y -f ~/.ssh/sentinel_vm_key > /dev/null
+          echo "SSH private key parsed successfully"
+
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+      
       - name: Test SSH connection
         run: |
           ssh \
