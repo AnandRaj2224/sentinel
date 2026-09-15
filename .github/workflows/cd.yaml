@@ -9,3 +9,18 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/sentinel_vm_key
+          chmod 600 ~/.ssh/sentinel_vm_key
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh \
+            -i ~/.ssh/sentinel_vm_key \
+            "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            "echo 'SSH connection successful'"
