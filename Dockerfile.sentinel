@@ -18,4 +18,6 @@ FROM scratch
 
 COPY --from=BUILDER /app/sentinel .
 
+COPY web/index.html ./index.html
+
 CMD [ "./sentinel" ]
