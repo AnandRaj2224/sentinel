@@ -7,9 +7,10 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
-      - ROUTES_JSON={"/":{"TargetURLs":["http://ui-server:8081"],"WindowSeconds":60,"MaxRequests":1000},"/api/test":{"TargetURLs":["http://target-backend-1:9001","http://target-backend-2:9002"],"WindowSeconds":10,"MaxRequests":20}}
+      - ROUTES_JSON={"/api/test":{"TargetURLs":["http://target-backend-1:9001","http://target-backend-2:9002"],"WindowSeconds":10,"MaxRequests":20}}
 
   target-backend-1:
+    image: ghcr.io/anandraj2224/dummy-backend:manual
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -17,15 +18,9 @@ services:
       - PORT=9001
 
   target-backend-2:
+    image: ghcr.io/anandraj2224/dummy-backend:manual
     build:
       context: .
       dockerfile: Dockerfile.backend
     environment:
       - PORT=9002
-
-  ui-server:
-    build:
-      context: .
-      dockerfile: Dockerfile.ui
-    ports:
-      - "8081:8081"
