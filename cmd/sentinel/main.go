@@ -40,7 +40,7 @@ func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 			http.ServeFile(w, r, "index.html")
 			return
 		}
-		
+
 		target, exists := routes[path]
 
 		if !exists {
