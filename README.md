@@ -10,10 +10,14 @@
 ![GHCR](https://img.shields.io/badge/GHCR-Container_Registry-2088FF?style=for-the-badge&logo=github)
 ![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-[![CI](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml)
-[![CD](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml)
+[![CI](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yaml)
+[![CD](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yaml)
 </div>
 
+
+> 🌐 **Live Deployment:** [http://sentinel.indiasouthcentral.cloudapp.azure.com](http://sentinel.indiasouthcentral.cloudapp.azure.com)
+
+Sentinel is a concurrent reverse proxy and API gateway written in **Go**...
 Sentinel is a concurrent reverse proxy and API gateway written in **Go**. It centralizes edge concerns—including **rate limiting**, **idempotency**, **reverse proxying**, and **structured logging**—allowing backend services to remain stateless and focused solely on business logic.
 
 Built around Go's concurrency primitives, Sentinel leverages **lock striping**, **double-check locking**, and lightweight middleware to efficiently process concurrent HTTP traffic while enforcing security and reliability at the network edge.
