@@ -6,11 +6,12 @@
 
 ![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![GHCR](https://img.shields.io/badge/GHCR-Container_Registry-2088FF?style=for-the-badge&logo=github)
 ![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
-![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=for-the-badge&logo=htmx&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Build](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)
-
+[![CI](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml)
+[![CD](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml)
 </div>
 
 Sentinel is a concurrent reverse proxy and API gateway written in **Go**. It centralizes edge concerns—including **rate limiting**, **idempotency**, **reverse proxying**, and **structured logging**—allowing backend services to remain stateless and focused solely on business logic.
@@ -19,7 +20,7 @@ Built around Go's concurrency primitives, Sentinel leverages **lock striping**, 
 
 ---
 
-# 🖼️ HTMX Management Dashboard
+# 🖼️ Dashboard
 
 Sentinel includes a lightweight server-rendered management dashboard built with **HTMX** for exercising gateway functionality without external API clients.
 
@@ -235,21 +236,20 @@ docker compose up --build
 This launches:
 
 - Sentinel Gateway (`localhost:8000`)
-- HTMX Dashboard (`localhost:8081`)
 - Protected backend services on an isolated Docker network
 
 ---
 
 # 🔮 Roadmap
 
-- [ ] CI/CD pipeline
+- [x] CI/CD pipeline
+- [x] Azure VM deployment
 - [ ] Redis-backed distributed rate limiting
 - [ ] Redis-backed idempotency storage
 - [ ] Prometheus metrics
-- [ ] OpenTelemetry tracing
+- [ ] Grafana Dashboard
 - [ ] Dynamic configuration reload
 - [ ] Circuit breaker middleware
-- [ ] Distributed request tracing
 
 ---
 
