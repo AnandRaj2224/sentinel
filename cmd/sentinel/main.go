@@ -37,7 +37,7 @@ func DynamicRouter(routes map[string]engine.RouteConfig) http.Handler {
 
 		if path == "/" {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			http.ServeFile(w, r, "index.html")
+			http.ServeFile(w, r, "web/index.html")
 			return
 		}
 
