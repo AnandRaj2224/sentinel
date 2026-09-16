@@ -6,21 +6,18 @@
 
 ![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
-![GHCR](https://img.shields.io/badge/GHCR-Container_Registry-2088FF?style=for-the-badge&logo=github)
+![Actions](https://img.shields.io/badge/Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![GHCR](https://img.shields.io/badge/GHCR-2088FF?style=for-the-badge&logo=github&logoColor=white)
 ![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-[![CI](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yaml)
-[![CD](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yaml)
+![MIT](https://img.shields.io/badge/MIT-green?style=for-the-badge)
+[![CI](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yaml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/ci.yaml)
+[![CD](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yaml/badge.svg)](https://github.com/AnandRaj2224/sentinel/actions/workflows/cd.yaml)
+
 </div>
 
-
-> 🌐 **Live Deployment:** [http://sentinel.indiasouthcentral.cloudapp.azure.com](http://sentinel.indiasouthcentral.cloudapp.azure.com)
-
-Sentinel is a concurrent reverse proxy and API gateway written in **Go**...
 Sentinel is a concurrent reverse proxy and API gateway written in **Go**. It centralizes edge concerns—including **rate limiting**, **idempotency**, **reverse proxying**, and **structured logging**—allowing backend services to remain stateless and focused solely on business logic.
 
-Built around Go's concurrency primitives, Sentinel leverages **lock striping**, **double-check locking**, and lightweight middleware to efficiently process concurrent HTTP traffic while enforcing security and reliability at the network edge.
+Built around Go's concurrency primitives, Sentinel uses **lock striping**, **double-check locking**, and lightweight middleware to process concurrent HTTP traffic while maintaining consistent shared state.
 
 ---
 
@@ -74,28 +71,28 @@ Client
           ├── Rate Limit Exceeded
           │
           ▼
-      HTTP 429
+       HTTP 429
           │
           ▼
 ┌────────────────────┐
 │ Idempotency Engine │
 └────────────────────┘
           │
-     Cache Hit?
-      │       │
-     Yes      No
-      │        │
-      ▼        ▼
+       Cache Hit?
+       │       │
+      Yes      No
+       │        │
+       ▼        ▼
 Return Cached  Reverse Proxy
- Response         │
+Response          │
                   ▼
-        Round-Robin Backend
+          Round-Robin Backend
                   │
                   ▼
-          Cache Response
+            Cache Response
                   │
                   ▼
-          Return Client
+             Return Client
 ```
 
 ---
@@ -198,8 +195,6 @@ An in-memory cache minimizes latency by eliminating additional network hops. A R
 
 ---
 
----
-
 # ⚙️ Technology Stack
 
 | Layer         | Technology                               |
@@ -227,7 +222,6 @@ An in-memory cache minimizes latency by eliminating additional network hops. A R
 
 ```bash
 git clone https://github.com/AnandRaj2224/sentinel
-
 cd sentinel
 ```
 
